@@ -1,24 +1,40 @@
-// src/pages/Login.js
+// src/auth/Login.js
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
+import { loginUser } from '../services/api';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const history = useHistory();
+  const navigate = useNavigate();
   const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post('/api/users/login', { email, password });
-      const token = res.data.token;
+      const res = await loginUser({ email, password });
+      const { token, role } = res.data;
       localStorage.setItem('token', token);
-      const { role } = JSON.parse(atob(token.split('.')[1]));
       setUser({ token, role });
-      history.push(`/${role}-dashboard`);
+
+      switch (role) {
+        case 'client':
+          navigate('/client-dashboard');
+          break;
+        case 'driver':
+          navigate('/driver-dashboard');
+          break;
+        case 'stockManager':
+          navigate('/stock-manager-dashboard');
+          break;
+        case 'admin':
+          navigate('/admin-dashboard');
+          break;
+        default:
+          navigate('/');
+          break;
+      }
     } catch (error) {
       console.error('Error logging in:', error);
     }

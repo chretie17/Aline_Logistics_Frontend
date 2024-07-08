@@ -1,66 +1,73 @@
-// src/pages/admin/AdminDashboard.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState, useContext } from 'react';
+import { AuthContext } from '../../contexts/AuthContext';
+import { getAllOrders, getReports } from '../../services/AdminServices';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
+import Chart from 'chart.js/auto';
 
 const AdminDashboard = () => {
-  const [users, setUsers] = useState([]);
+  const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
-  const [transports, setTransports] = useState([]);
+  const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      const res = await axios.get('/api/admin/users', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setUsers(res.data);
+    const fetchData = async () => {
+      const token = user.token;
+      const ordersData = await getAllOrders(token);
+      setOrders(ordersData.data);
+      const reportsData = await getReports(token);
+      setReports(reportsData.data);
     };
 
-    const fetchOrders = async () => {
-      const res = await axios.get('/api/admin/orders', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setOrders(res.data);
-    };
+    fetchData();
+  }, [user]);
 
-    const fetchTransports = async () => {
-      const res = await axios.get('/api/admin/transports', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  useEffect(() => {
+    if (orders.length > 0) {
+      const ctx = document.getElementById('ordersChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: orders.map(order => order.id),
+          datasets: [{
+            label: 'Orders',
+            data: orders.map(order => order.amount), // Assume 'amount' is a field in the Order model
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
       });
-      setTransports(res.data);
-    };
-
-    fetchUsers();
-    fetchOrders();
-    fetchTransports();
-  }, []);
+    }
+  }, [orders]);
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <h2>Manage Users</h2>
-      <ul>
-        {users.map(user => (
-          <li key={user.id}>
-            {user.name} - {user.email} - {user.role}
-          </li>
-        ))}
-      </ul>
-      <h2>Manage Orders</h2>
-      <ul>
-        {orders.map(order => (
-          <li key={order.id}>
-            {order.productId} - {order.quantity} - {order.status}
-          </li>
-        ))}
-      </ul>
-      <h2>Manage Transports</h2>
-      <ul>
-        {transports.map(transport => (
-          <li key={transport.id}>
-            Order ID: {transport.orderId} - Status: {transport.status}
-          </li>
-        ))}
-      </ul>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+      <Typography variant="h3" align="center" gutterBottom>Admin Dashboard</Typography>
+      <Grid container spacing={4}>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" gutterBottom>Orders</Typography>
+              <canvas id="ordersChart" style={{ width: '100%', height: '400px' }}></canvas>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" gutterBottom>Reports</Typography>
+              <Typography>{reports.message}</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </div>
   );
 };
