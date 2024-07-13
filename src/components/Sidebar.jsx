@@ -1,14 +1,24 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Divider, Toolbar, Typography, useMediaQuery } from '@mui/material';
 import { Home, People, ShoppingCart, LocalShipping, Assessment, ExitToApp, Menu } from '@mui/icons-material';
 
 const Sidebar = ({ role, onLogout }) => {
   const [open, setOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width:768px)');
+  const navigate = useNavigate();
 
   const toggleDrawer = () => {
     setOpen(!open);
+  };
+
+  const handleLogout = () => {
+    if (typeof onLogout === 'function') {
+      onLogout();
+      navigate('/login');
+    } else {
+      console.error('onLogout is not a function');
+    }
   };
 
   const getLinks = () => {
@@ -17,13 +27,15 @@ const Sidebar = ({ role, onLogout }) => {
         return [
           { text: 'Dashboard', icon: <Home />, link: '/admin-dashboard' },
           { text: 'Manage Users', icon: <People />, link: '/manage-users' },
+          { text: 'Manage Stock', icon: <ShoppingCart />, link: '/admin-manage-stock' },
           { text: 'Manage Orders', icon: <ShoppingCart />, link: '/manage-orders' },
           { text: 'Manage Transports', icon: <LocalShipping />, link: '/manage-transports' },
-          { text: 'Manage Reports', icon: <Assessment />, link: '/manage-reports' }
+          { text: 'Manage Reports', icon: <Assessment />, link: '/manage-reports' },
         ];
       case 'client':
         return [
           { text: 'Dashboard', icon: <Home />, link: '/client-dashboard' },
+          { text: 'Products', icon: <ShoppingCart />, link: '/browse-products' },
           { text: 'My Orders', icon: <ShoppingCart />, link: '/client-orders' },
           { text: 'Feedback', icon: <Assessment />, link: '/client-feedback' }
         ];
@@ -64,7 +76,7 @@ const Sidebar = ({ role, onLogout }) => {
             <ListItemText primary={text} />
           </ListItem>
         ))}
-        <ListItem button onClick={onLogout}>
+        <ListItem button onClick={handleLogout}>
           <ListItemIcon><ExitToApp /></ListItemIcon>
           <ListItemText primary="Logout" />
         </ListItem>
