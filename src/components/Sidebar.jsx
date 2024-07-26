@@ -2,6 +2,29 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Divider, Toolbar, Typography, useMediaQuery } from '@mui/material';
 import { Home, People, ShoppingCart, LocalShipping, Assessment, ExitToApp, Menu } from '@mui/icons-material';
+import { styled } from '@mui/system';
+
+const StyledDrawer = styled(Drawer)`
+  .MuiDrawer-paper {
+    background-color: #2c3e50; // Dark background color
+    color: #ecf0f1; // Light text color
+    width: 250px; // Adjust the width of the sidebar
+  }
+`;
+
+const StyledListItem = styled(ListItem)`
+  &:hover {
+    background-color: #34495e; // Hover effect color
+  }
+`;
+
+const StyledListItemIcon = styled(ListItemIcon)`
+  color: #ecf0f1; // Light icon color
+`;
+
+const StyledTypography = styled(Typography)`
+  color: #ecf0f1; // Light text color
+`;
 
 const Sidebar = ({ role, onLogout }) => {
   const [open, setOpen] = useState(false);
@@ -32,13 +55,7 @@ const Sidebar = ({ role, onLogout }) => {
           { text: 'Manage Transports', icon: <LocalShipping />, link: '/manage-transports' },
           { text: 'Manage Reports', icon: <Assessment />, link: '/manage-reports' },
         ];
-      case 'client':
-        return [
-          { text: 'Dashboard', icon: <Home />, link: '/client-dashboard' },
-          { text: 'Products', icon: <ShoppingCart />, link: '/browse-products' },
-          { text: 'My Orders', icon: <ShoppingCart />, link: '/client-orders' },
-          { text: 'Feedback', icon: <Assessment />, link: '/client-feedback' }
-        ];
+
       case 'driver':
         return [
           { text: 'Dashboard', icon: <Home />, link: '/driver-dashboard' },
@@ -48,20 +65,23 @@ const Sidebar = ({ role, onLogout }) => {
         return [
           { text: 'Dashboard', icon: <Home />, link: '/stock-manager-dashboard' },
           { text: 'Manage Stock', icon: <ShoppingCart />, link: '/manage-stock' },
-          { text: 'Manage Purchases', icon: <ShoppingCart />, link: '/manage-purchases' },
-          { text: 'Manage Sales', icon: <ShoppingCart />, link: '/manage-sales' }
+          { text: 'Manage Orders', icon: <ShoppingCart />, link: '/manage-orders' },
         ];
       default:
         return [];
     }
   };
 
+  if (role === 'client') {
+    return null; // Do not render the sidebar for clients
+  }
+
   const drawerContent = (
     <>
       <Toolbar>
-        <Typography variant="h6" noWrap>
+        <StyledTypography variant="h6" noWrap>
           {role.charAt(0).toUpperCase() + role.slice(1)} Dashboard
-        </Typography>
+        </StyledTypography>
         {isMobile && (
           <IconButton onClick={toggleDrawer}>
             <ExitToApp />
@@ -71,15 +91,15 @@ const Sidebar = ({ role, onLogout }) => {
       <Divider />
       <List>
         {getLinks().map(({ text, icon, link }) => (
-          <ListItem button component={Link} to={link} key={text} onClick={isMobile ? toggleDrawer : undefined}>
-            <ListItemIcon>{icon}</ListItemIcon>
+          <StyledListItem button component={Link} to={link} key={text} onClick={isMobile ? toggleDrawer : undefined}>
+            <StyledListItemIcon>{icon}</StyledListItemIcon>
             <ListItemText primary={text} />
-          </ListItem>
+          </StyledListItem>
         ))}
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon><ExitToApp /></ListItemIcon>
+        <StyledListItem button onClick={handleLogout}>
+          <StyledListItemIcon><ExitToApp /></StyledListItemIcon>
           <ListItemText primary="Logout" />
-        </ListItem>
+        </StyledListItem>
       </List>
     </>
   );
@@ -91,17 +111,17 @@ const Sidebar = ({ role, onLogout }) => {
           <Menu />
         </IconButton>
       )}
-      <Drawer
+      <StyledDrawer
         variant={isMobile ? "temporary" : "permanent"}
         anchor="left"
         open={open || !isMobile}
         onClose={toggleDrawer}
         ModalProps={{
-          keepMounted: true, // Better open performance on mobile.
+          keepMounted: true, 
         }}
       >
         {drawerContent}
-      </Drawer>
+      </StyledDrawer>
     </div>
   );
 };

@@ -183,9 +183,9 @@ const AdminManageStock = () => {
                 <TableCell>{stock.name}</TableCell>
                 <TableCell>{stock.category}</TableCell>
                 <TableCell>{stock.upc}</TableCell>
-                <TableCell>{`$${stock.price}`}</TableCell>
+                <TableCell>{`Rwf${stock.price}`}</TableCell>
                 <TableCell>{stock.inStock}</TableCell>
-                <TableCell>{`$${stock.totalValue}`}</TableCell>
+                <TableCell>{`Rwf${stock.totalValue}`}</TableCell>
                 <TableCell>
                   <Typography color={stock.status === 'Out of stock' ? 'error' : 'text.primary'}>
                     {stock.status}

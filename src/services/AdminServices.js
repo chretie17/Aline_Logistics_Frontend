@@ -31,11 +31,7 @@ export const deleteUser = (token, userId) => {
   });
 };
 
-export const getAllOrders = (token) => {
-  return api.get('/admin/orders', {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-};
+
 
 export const createOrder = (token, orderData) => {
   return api.post('/admin/orders', orderData, {
@@ -81,6 +77,23 @@ export const deleteTransport = (token, transportId) => {
 
 export const getReports = (token) => {
   return api.get('/admin/reports', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+export const getAllOrders = (token) => {
+  return api.get('/orders', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+export const getAllStocks = (token) => {
+  return api.get('/stocks', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+export const getDashboardData = (token) => {
+  return api.get('/admin/dashboard-data', {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

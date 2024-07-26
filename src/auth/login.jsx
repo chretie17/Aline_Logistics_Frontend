@@ -20,7 +20,7 @@ const Login = () => {
 
       switch (role) {
         case 'client':
-          navigate('/client-dashboard');
+          navigate('/');
           break;
         case 'driver':
           navigate('/driver-dashboard');

@@ -10,7 +10,11 @@ const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       getUserProfile(token).then(profile => {
-        setUser({ token, role: profile.data.role });
+        setUser({ 
+          token, 
+          id: profile.data.id,  // Ensure the user ID is included
+          role: profile.data.role 
+        });
       }).catch(() => {
         localStorage.removeItem('token');
       });
