@@ -22,38 +22,10 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Delete, ShoppingCart, AddShoppingCart } from '@mui/icons-material';
-import styled, { keyframes } from 'styled-components';
-
-const zoomIn = keyframes`
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.1);
-  }
-`;
-
-const ZoomImage = styled.img`
-  transition: transform 0.2s ease-in-out;
-  &:hover {
-    animation: ${zoomIn} 0.2s forwards;
-  }
-`;
-
-const FloatingCartButton = styled(IconButton)`
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background-color: #fff;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  &:hover {
-    background-color: #f0f0f0;
-  }
-  font-size: 2rem;
-`;
 
 const BrowseProduct = () => {
   const { user } = useContext(AuthContext);
@@ -63,12 +35,19 @@ const BrowseProduct = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [cartAnchorEl, setCartAnchorEl] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   useEffect(() => {
     const fetchData = async () => {
       if (user && user.token) {
-        const stocksData = await getAllStocks(user.token);
-        setStocks(stocksData.data);
+        try {
+          const stocksData = await getAllStocks(user.token);
+          setStocks(stocksData.data);
+        } catch (error) {
+          console.error('Error fetching stocks:', error);
+        }
       }
     };
 
@@ -79,6 +58,9 @@ const BrowseProduct = () => {
     if (selectedProduct) {
       setCart([...cart, { ...selectedProduct, quantity: Number(quantity) }]);
       setOpenDialog(false);
+      setSnackbarMessage('Product added to cart!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
     }
   };
 
@@ -86,6 +68,9 @@ const BrowseProduct = () => {
     const newCart = cart.slice();
     newCart.splice(index, 1);
     setCart(newCart);
+    setSnackbarMessage('Product removed from cart.');
+    setSnackbarSeverity('info');
+    setSnackbarOpen(true);
   };
 
   const handleCheckout = async () => {
@@ -105,9 +90,14 @@ const BrowseProduct = () => {
       }
 
       setCart([]);
-      console.log('Order created successfully');
+      setSnackbarMessage('Order created successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error creating order:', error.response?.data || error.message);
+      console.error('Error creating order:', error);
+      setSnackbarMessage('Failed to create order.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
     }
   };
 
@@ -125,20 +115,38 @@ const BrowseProduct = () => {
     setCartAnchorEl(null);
   };
 
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
   return (
-    <Container style={{ marginTop: '20px' }}>
+    <Container style={{ marginTop: '20px', position: 'relative' }}>
       <Typography variant="h4" align="center" gutterBottom style={{ fontWeight: 'bold', marginBottom: '30px' }}>
         Browse Products
       </Typography>
       <Grid container spacing={4}>
         {stocks.map((stock) => (
           <Grid item xs={12} sm={6} md={4} key={stock.id}>
-            <Card style={{ boxShadow: '0 3px 6px rgba(0,0,0,0.1)', transition: 'all 0.3s', borderRadius: '10px' }}>
+            <Card
+              style={{
+                boxShadow: '0 3px 6px rgba(0,0,0,0.1)',
+                transition: 'all 0.3s',
+                borderRadius: '10px',
+              }}
+            >
               {stock.image && (
-                <ZoomImage
+                <img
                   src={`data:image/jpeg;base64,${stock.image}`}
                   alt={stock.name}
-                  style={{ width: '100%', height: '200px', objectFit: 'cover' }}
+                  style={{
+                    width: '100%',
+                    height: '200px',
+                    objectFit: 'cover',
+                    borderRadius: '10px 10px 0 0',
+                  }}
                 />
               )}
               <CardContent style={{ padding: '20px' }}>
@@ -181,11 +189,22 @@ const BrowseProduct = () => {
         ))}
       </Grid>
 
-      <FloatingCartButton onClick={handleCartClick}>
+      <IconButton
+        onClick={handleCartClick}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          backgroundColor: '#fff',
+          boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1)',
+          zIndex: 1000,
+          fontSize: '2rem',
+        }}
+      >
         <Badge badgeContent={cart.length} color="secondary">
           <ShoppingCart fontSize="large" />
         </Badge>
-      </FloatingCartButton>
+      </IconButton>
 
       <Dialog open={Boolean(cartAnchorEl)} onClose={handleCartClose}>
         <Box sx={{ minWidth: 300, padding: '10px' }}>
@@ -200,6 +219,19 @@ const BrowseProduct = () => {
             ) : (
               cart.map((item, index) => (
                 <ListItem key={index} style={{ padding: '10px 0' }}>
+                  {item.image && (
+                    <img
+                      src={`data:image/jpeg;base64,${item.image}`}
+                      alt={item.name}
+                      style={{
+                        width: '50px',
+                        height: '50px',
+                        objectFit: 'cover',
+                        marginRight: '10px',
+                        borderRadius: '4px',
+                      }}
+                    />
+                  )}
                   <ListItemText
                     primary={`${item.name} - ${item.quantity} pcs`}
                     secondary={`Price: Rwf${item.price * item.quantity}`}
@@ -254,6 +286,12 @@ const BrowseProduct = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

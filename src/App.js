@@ -20,6 +20,7 @@ import { AuthContext, AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './auth/ProtectedRoute';
 import ManageStock from './pages/stockManager/ManageStock';
 import BrowseProducts from './pages/client/BrowseProduct';
+import Feedback from './pages/client/Feedback';
 import './App.css'; // General styles
 
 const App = () => {
@@ -55,6 +56,8 @@ const App = () => {
             <Route path="/order-tracking" element={<OrderTracking />} />
             <Route path="/order-tracking/:orderId" element={<OrderTracking />} />
             <Route path="/my-orders" element={<MyOrders />} />
+            <Route path="/feedback" element={<Feedback />} />
+
           </Route>
           <Route element={<ProtectedRoute role="driver" />}>
             <Route path="/driver-dashboard" element={<DriverDashboard />} />

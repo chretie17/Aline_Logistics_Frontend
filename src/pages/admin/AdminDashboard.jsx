@@ -1,61 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getAllOrders, getAllStocks, getDashboardData } from '../../services/AdminServices';
-import { Card, CardContent, Typography, Grid, Container, Box, Paper } from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
-import { Line, Pie } from 'react-chartjs-2';
-import { css } from '@emotion/react';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  LineElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
-
-const styles = {
-  root: css`
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  `,
-  card: css`
-    border-radius: 15px;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-  `,
-  cardHeader: css`
-    font-weight: bold;
-    color: #3f51b5;
-    margin-bottom: 10px;
-  `,
-  chartContainer: css`
-    height: 300px;
-  `,
-  cardContent: css`
-    text-align: center;
-  `,
-  paper: css`
-    padding: 16px;
-    text-align: center;
-    color: #000;
-    height: 150px;
-  `,
-};
+import { Box, Card, CardContent, Container, Grid, Paper, Typography } from '@mui/material';
+import { ShoppingCart, Store, TrendingUp, People } from '@mui/icons-material';
+import ReactApexChart from 'react-apexcharts';
 
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -72,116 +20,199 @@ const AdminDashboard = () => {
       setStock(stockData.data);
       const dashboardData = await getDashboardData(token);
       setDashboardData(dashboardData.data);
+      
     };
 
     fetchData();
   }, [user]);
 
   const ordersData = {
-    labels: orders.map(order => new Date(order.createdAt).toLocaleDateString()),
-    datasets: [
+    series: [
       {
-        label: 'Orders',
+        name: 'Orders',
         data: orders.map(order => order.quantity),
-        fill: false,
-        backgroundColor: 'rgb(75, 192, 192)',
-        borderColor: 'rgba(75, 192, 192, 0.2)',
       },
     ],
+    options: {
+      chart: {
+        height: 350,
+        type: 'area',
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        curve: 'smooth',
+      },
+      xaxis: {
+        type: 'datetime',
+        categories: orders.map(order => new Date(order.createdAt).toISOString()),
+      },
+      tooltip: {
+        x: {
+          format: 'dd/MM/yy HH:mm',
+        },
+      },
+    },
   };
 
-  const stockData = {
-    labels: stock.map(item => item.name),
-    datasets: [
-      {
-        label: 'Stock Quantity',
-        data: stock.map(item => item.inStock),
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1,
+  const polarAreaData = {
+    series: stock.map(item => item.inStock),
+    options: {
+      chart: {
+        type: 'polarArea',
       },
-    ],
+      stroke: {
+        colors: ['#fff'],
+      },
+      fill: {
+        opacity: 0.8,
+      },
+      labels: stock.map(item => item.name),
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 200,
+          },
+          legend: {
+            position: 'bottom',
+          },
+        },
+      }],
+    },
   };
 
-  const pieData = {
-    labels: stock.map(item => item.name),
-    datasets: [
-      {
-        label: 'Stock Distribution',
-        data: stock.map(item => item.inStock),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.2)',
-          'rgba(54, 162, 235, 0.2)',
-          'rgba(255, 206, 86, 0.2)',
-          'rgba(75, 192, 192, 0.2)',
-          'rgba(153, 102, 255, 0.2)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
+  const barChartData = {
+    series: [{
+      name: 'Stock Levels',
+      data: stock.map(item => item.inStock),
+    }],
+    options: {
+      annotations: {
+        points: [{
+          x: 'Bananas',
+          seriesIndex: 0,
+          label: {
+            borderColor: '#775DD0',
+            offsetY: 0,
+            style: {
+              color: '#fff',
+              background: '#775DD0',
+            },
+            text: 'Bananas are good',
+          },
+        }],
       },
-    ],
+      chart: {
+        height: 350,
+        type: 'bar',
+      },
+      plotOptions: {
+        bar: {
+          borderRadius: 10,
+          columnWidth: '50%',
+        },
+      },
+      dataLabels: {
+        enabled: false,
+      },
+      stroke: {
+        width: 0,
+      },
+      grid: {
+        row: {
+          colors: ['#fff', '#f2f2f2'],
+        },
+      },
+      xaxis: {
+        labels: {
+          rotate: -45,
+        },
+        categories: stock.map(item => item.name),
+        tickPlacement: 'on',
+      },
+      yaxis: {
+        title: {
+          text: 'Stock Levels',
+        },
+      },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shade: 'light',
+          type: "horizontal",
+          shadeIntensity: 0.25,
+          gradientToColors: undefined,
+          inverseColors: true,
+          opacityFrom: 0.85,
+          opacityTo: 0.85,
+          stops: [50, 0, 100],
+        },
+      },
+    },
   };
 
   return (
-    <Container css={styles.root}>
-      <Typography variant="h3" align="center" gutterBottom>Admin Dashboard</Typography>
+    <Container maxWidth="lg">
+      <Typography variant="h3" align="center" gutterBottom>
+        Admin Dashboard
+      </Typography>
       <Grid container spacing={4}>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper css={styles.paper}>
-            <Typography variant="h6" css={styles.cardHeader}>Total Orders</Typography>
+          <Paper elevation={3} sx={{ p: 3, position: 'relative', overflow: 'hidden', borderRadius: 3 }}>
+            <ShoppingCart sx={{ position: 'absolute', top: -10, right: -10, fontSize: '6rem', color: 'rgba(0, 0, 0, 0.1)' }} />
+            <Typography variant="h6" sx={{ mb: 1 }}>Total Orders</Typography>
             <Typography variant="h4">{dashboardData.totalOrders}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper css={styles.paper}>
-            <Typography variant="h6" css={styles.cardHeader}>Total Stock</Typography>
+          <Paper elevation={3} sx={{ p: 3, position: 'relative', overflow: 'hidden', borderRadius: 3 }}>
+            <Store sx={{ position: 'absolute', top: -10, right: -10, fontSize: '6rem', color: 'rgba(0, 0, 0, 0.1)' }} />
+            <Typography variant="h6" sx={{ mb: 1 }}>Total Stock</Typography>
             <Typography variant="h4">{dashboardData.totalStock}</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper css={styles.paper}>
-            <Typography variant="h6" css={styles.cardHeader}>Orders Today</Typography>
-            <Typography variant="h4">15</Typography>
+          <Paper elevation={3} sx={{ p: 3, position: 'relative', overflow: 'hidden', borderRadius: 3 }}>
+            <TrendingUp sx={{ position: 'absolute', top: -10, right: -10, fontSize: '6rem', color: 'rgba(0, 0, 0, 0.1)' }} />
+            <Typography variant="h6" sx={{ mb: 1 }}>Orders Today</Typography>
+            <Typography variant="h4">1</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper css={styles.paper}>
-            <Typography variant="h6" css={styles.cardHeader}>New Users</Typography>
+          <Paper elevation={3} sx={{ p: 3, position: 'relative', overflow: 'hidden', borderRadius: 3 }}>
+            <People sx={{ position: 'absolute', top: -10, right: -10, fontSize: '6rem', color: 'rgba(0, 0, 0, 0.1)' }} />
+            <Typography variant="h6" sx={{ mb: 1 }}>New Users</Typography>
             <Typography variant="h4">5</Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card css={styles.card}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
             <CardContent>
-              <Typography variant="h5" css={styles.cardHeader}>Orders Over Time</Typography>
-              <Box css={styles.chartContainer}>
-                <Line data={ordersData} />
+              <Typography variant="h5" sx={{ mb: 3 }}>Orders Over Time</Typography>
+              <Box sx={{ height: 300 }}>
+                <ReactApexChart options={ordersData.options} series={ordersData.series} type="area" height={300} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Card css={styles.card}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
             <CardContent>
-              <Typography variant="h5" css={styles.cardHeader}>Stock Levels</Typography>
-              <Box css={styles.chartContainer}>
-                <Line data={stockData} />
+              <Typography variant="h5" sx={{ mb: 3 }}>Stock Levels</Typography>
+              <Box sx={{ height: 300 }}>
+                <ReactApexChart options={barChartData.options} series={barChartData.series} type="bar" height={300} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12}>
-          <Card css={styles.card}>
+          <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
             <CardContent>
-              <Typography variant="h5" css={styles.cardHeader}>Stock Distribution</Typography>
-              <Box css={styles.chartContainer}>
-                <Pie data={pieData} />
+              <Typography variant="h5" sx={{ mb: 3 }}>Stock Distribution</Typography>
+              <Box sx={{ height: 300 }}>
+                <ReactApexChart options={polarAreaData.options} series={polarAreaData.series} type="polarArea" height={300} />
               </Box>
             </CardContent>
           </Card>

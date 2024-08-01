@@ -1,47 +1,95 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Drawer, List, ListItem, ListItemIcon, ListItemText, IconButton, Divider, Toolbar, Typography, useMediaQuery } from '@mui/material';
-import { Home, People, ShoppingCart, LocalShipping, Assessment, ExitToApp, Menu } from '@mui/icons-material';
+import React, { useState, useContext } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  IconButton,
+  Divider,
+  Toolbar,
+  Typography,
+  Box,
+  useMediaQuery,
+  Switch
+} from '@mui/material';
+import { Home, People, ShoppingCart, LocalShipping, Assessment, ExitToApp, Menu, TextFields } from '@mui/icons-material';
 import { styled } from '@mui/system';
+import { AuthContext } from '../contexts/AuthContext';
 
-const StyledDrawer = styled(Drawer)`
-  .MuiDrawer-paper {
-    background-color: #2c3e50; // Dark background color
-    color: #ecf0f1; // Light text color
-    width: 250px; // Adjust the width of the sidebar
+const lightBlueTheme = {
+  background: '#e3f2fd', // Light blue background
+  text: '#0d47a1', // Dark blue text
+  hover: '#bbdefb', // Lighter blue on hover
+  icon: '#0d47a1', // Dark blue icons
+  active: '#90caf9', // Blue for active links
+};
+
+const darkBlueTheme = {
+  background: '#0d47a1', // Dark blue background
+  text: '#ffffff', // White text
+  hover: '#1565c0', // Darker blue on hover
+  icon: '#ffffff', // White icons
+  active: '#1976d2', // Blue for active links
+};
+
+const StyledDrawer = styled(Drawer)(({ theme, compact }) => ({
+  '.MuiDrawer-paper': {
+    backgroundColor: theme.background,
+    color: theme.text,
+    width: compact ? 80 : 250,
+    transition: 'width 0.3s, background-color 0.3s, color 0.3s',
+    overflowX: 'hidden',
   }
-`;
+}));
 
-const StyledListItem = styled(ListItem)`
-  &:hover {
-    background-color: #34495e; // Hover effect color
-  }
-`;
+const StyledListItemIcon = styled(ListItemIcon)(({ theme, compact }) => ({
+  color: theme.icon,
+  minWidth: compact ? 56 : 'auto',
+  marginRight: compact ? 0 : '16px',
+  justifyContent: 'center',
+}));
 
-const StyledListItemIcon = styled(ListItemIcon)`
-  color: #ecf0f1; // Light icon color
-`;
+const StyledListItemText = styled(ListItemText)(({ compact }) => ({
+  display: compact ? 'none' : 'block',
+  transition: 'display 0.3s',
+}));
 
-const StyledTypography = styled(Typography)`
-  color: #ecf0f1; // Light text color
-`;
+const StyledListItem = styled(ListItem)(({ theme, active }) => ({
+  backgroundColor: active ? theme.active : 'inherit',
+  '&:hover': {
+    backgroundColor: theme.hover,
+  },
+  transition: 'background-color 0.3s',
+}));
 
-const Sidebar = ({ role, onLogout }) => {
-  const [open, setOpen] = useState(false);
+const Sidebar = ({ role }) => {
+  const { user, setUser } = useContext(AuthContext);
+  const [isCompact, setIsCompact] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const isMobile = useMediaQuery('(max-width:768px)');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const toggleDrawer = () => {
-    setOpen(!open);
+  const handleToggleDrawer = () => {
+    setIsDrawerOpen(!isDrawerOpen);
   };
 
   const handleLogout = () => {
-    if (typeof onLogout === 'function') {
-      onLogout();
-      navigate('/login');
-    } else {
-      console.error('onLogout is not a function');
-    }
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login');
+  };
+
+  const handleToggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const handleToggleCompact = () => {
+    setIsCompact(!isCompact);
   };
 
   const getLinks = () => {
@@ -58,8 +106,7 @@ const Sidebar = ({ role, onLogout }) => {
 
       case 'driver':
         return [
-          { text: 'Dashboard', icon: <Home />, link: '/driver-dashboard' },
-          { text: 'My Transportations', icon: <LocalShipping />, link: '/driver-transport' }
+          { text: 'Dashboard', icon: <LocalShipping/>, link: '/driver-dashboard' },
         ];
       case 'stockManager':
         return [
@@ -76,49 +123,85 @@ const Sidebar = ({ role, onLogout }) => {
     return null; // Do not render the sidebar for clients
   }
 
+  const theme = isDarkMode ? darkBlueTheme : lightBlueTheme;
+
   const drawerContent = (
-    <>
+    <Box display="flex" flexDirection="column" height="100%">
       <Toolbar>
-        <StyledTypography variant="h6" noWrap>
-          {role.charAt(0).toUpperCase() + role.slice(1)} Dashboard
-        </StyledTypography>
-        {isMobile && (
-          <IconButton onClick={toggleDrawer}>
-            <ExitToApp />
-          </IconButton>
-        )}
+        <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
+          <Box display="flex" alignItems="center">
+            <IconButton color="inherit" aria-label="toggle drawer" onClick={handleToggleDrawer}>
+              <Menu />
+            </IconButton>
+            {!isCompact && (
+              <Typography variant="h6" noWrap>
+                {role.charAt(0).toUpperCase() + role.slice(1)}
+              </Typography>
+            )}
+          </Box>
+          <Box display="flex" alignItems="center">
+            <Tooltip title="Toggle Theme" arrow>
+              <Switch checked={isDarkMode} onChange={handleToggleTheme} />
+            </Tooltip>
+            <Tooltip title="Toggle Compact View" arrow>
+              
+            </Tooltip>
+          </Box>
+        </Box>
       </Toolbar>
       <Divider />
-      <List>
+      <List style={{ flexGrow: 1 }}>
         {getLinks().map(({ text, icon, link }) => (
-          <StyledListItem button component={Link} to={link} key={text} onClick={isMobile ? toggleDrawer : undefined}>
-            <StyledListItemIcon>{icon}</StyledListItemIcon>
-            <ListItemText primary={text} />
-          </StyledListItem>
+          <Tooltip key={text} title={!isCompact ? "" : text} placement="right" arrow>
+            <StyledListItem
+              button
+              component={Link}
+              to={link}
+              theme={theme}
+              compact={isCompact}
+              active={location.pathname === link ? 1 : 0}
+              onClick={isMobile ? handleToggleDrawer : undefined}
+            >
+              <StyledListItemIcon theme={theme} compact={isCompact}>
+                {icon}
+              </StyledListItemIcon>
+              <StyledListItemText primary={text} compact={isCompact} />
+            </StyledListItem>
+          </Tooltip>
         ))}
-        <StyledListItem button onClick={handleLogout}>
-          <StyledListItemIcon><ExitToApp /></StyledListItemIcon>
-          <ListItemText primary="Logout" />
-        </StyledListItem>
       </List>
-    </>
+      <Divider />
+      <Box mb={2} textAlign="center">
+        <Typography variant="body2" style={{ color: theme.text }}>
+          {user?.name}
+        </Typography>
+        <Tooltip title="Logout" placement="right" arrow>
+          <StyledListItem button onClick={handleLogout} theme={theme}>
+            <StyledListItemIcon theme={theme}><ExitToApp /></StyledListItemIcon>
+            <StyledListItemText primary="Logout" compact={isCompact} />
+          </StyledListItem>
+        </Tooltip>
+      </Box>
+    </Box>
   );
 
   return (
     <div>
       {isMobile && (
-        <IconButton color="inherit" aria-label="open drawer" onClick={toggleDrawer} edge="start">
+        <IconButton color="inherit" aria-label="open drawer" onClick={handleToggleDrawer} edge="start">
           <Menu />
         </IconButton>
       )}
       <StyledDrawer
         variant={isMobile ? "temporary" : "permanent"}
         anchor="left"
-        open={open || !isMobile}
-        onClose={toggleDrawer}
+        open={isDrawerOpen || !isMobile}
+        onClose={handleToggleDrawer}
         ModalProps={{
-          keepMounted: true, 
+          keepMounted: true,
         }}
+        theme={theme}
+        compact={isCompact}
       >
         {drawerContent}
       </StyledDrawer>

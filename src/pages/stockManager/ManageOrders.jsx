@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getAllOrders, updateOrderStatus, assignOrderToDriver, deleteOrder } from '../../services/OrdersServices';
-import { getAllDrivers } from '../../services/DriverServices.js';
+import { getAllDrivers } from '../../services/DriverServices';
 import {
   Container,
   Typography,
@@ -19,11 +19,11 @@ import {
   MenuItem,
   Select,
   Box,
-  IconButton,
   Tooltip,
 } from '@mui/material';
 import { CheckCircle, Assignment, Delete } from '@mui/icons-material';
 import { styled } from '@mui/system';
+
 
 const StyledCard = styled(Card)`
   background-color: #f5f5f5;
@@ -36,6 +36,7 @@ const StyledButton = styled(Button)`
   margin-right: 10px;
 `;
 
+
 const ManageOrders = () => {
   const { user } = useContext(AuthContext);
   const [orders, setOrders] = useState([]);
@@ -45,24 +46,37 @@ const ManageOrders = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [selectedDriverId, setSelectedDriverId] = useState('');
+  const [newStatus, setNewStatus] = useState('');
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchOrdersAndDrivers = async () => {
       try {
         const ordersData = await getAllOrders(user.token);
-        setOrders(ordersData.data);
+        setOrders(Array.isArray(ordersData.data) ? ordersData.data : []);
+  
         const driversData = await getAllDrivers(user.token);
-        setDrivers(driversData.data);
+        console.log('Drivers raw response:', driversData);
+        console.log('Drivers data:', driversData.data);
+  
+        // Access the nested array correctly
+        if (Array.isArray(driversData.data.data)) {
+          setDrivers(driversData.data.data);
+        } else {
+          console.error('Expected an array for drivers data:', driversData.data.data);
+        }
       } catch (error) {
         console.error('Error fetching orders or drivers:', error);
       }
     };
-
+  
     if (user) {
-      fetchOrders();
+      fetchOrdersAndDrivers();
     }
   }, [user]);
-
+  
+  
+  
+  
   const handleAcceptOrder = async (orderId) => {
     try {
       await updateOrderStatus(user.token, orderId, { status: 'Order Accepted' });
@@ -82,13 +96,14 @@ const ManageOrders = () => {
   const handleCloseStatusDialog = () => {
     setOpenStatusDialog(false);
     setSelectedOrderId(null);
+    setNewStatus('');
   };
 
-  const handleUpdateOrderStatus = async (status) => {
+  const handleUpdateOrderStatus = async () => {
     try {
-      await updateOrderStatus(user.token, selectedOrderId, { status });
+      await updateOrderStatus(user.token, selectedOrderId, { status: newStatus });
       setOrders(orders.map(order =>
-        order.id === selectedOrderId ? { ...order, status, [`${status.replace(' ', '')}At`]: new Date().toISOString() } : order
+        order.id === selectedOrderId ? { ...order, status: newStatus, [`${newStatus.replace(' ', '')}At`]: new Date().toISOString() } : order
       ));
       handleCloseStatusDialog();
     } catch (error) {
@@ -104,6 +119,7 @@ const ManageOrders = () => {
   const handleCloseAssignDialog = () => {
     setOpenAssignDialog(false);
     setSelectedOrderId(null);
+    setSelectedDriverId('');
   };
 
   const handleAssignOrderToDriver = async () => {
@@ -117,7 +133,7 @@ const ManageOrders = () => {
       console.error('Error assigning order to driver:', error);
     }
   };
-
+  
   const handleOpenDeleteDialog = (orderId) => {
     setSelectedOrderId(orderId);
     setOpenDeleteDialog(true);
@@ -149,10 +165,10 @@ const ManageOrders = () => {
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Box>
                     <Typography variant="h6">Order #{order.id}</Typography>
-                    <Typography>Product ID: {order.productId}</Typography>
+                    <Typography>Product Name: {order.productName}</Typography>
                     <Typography>Quantity: {order.quantity}</Typography>
                     <Typography>Status: {order.status}</Typography>
-                    <Typography>Assigned Driver: {order.driverId || 'None'}</Typography>
+                    <Typography>Assigned Driver: {drivers.find(driver => driver.id === order.driverId)?.name || 'None'}</Typography>
                   </Box>
                   <Box>
                     <Tooltip title="Accept Order">
@@ -212,7 +228,8 @@ const ManageOrders = () => {
           <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select
-              onChange={(e) => handleUpdateOrderStatus(e.target.value)}
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
             >
               <MenuItem value="Order Accepted">Order Accepted</MenuItem>
               <MenuItem value="Order Packed">Order Packed</MenuItem>
@@ -226,6 +243,9 @@ const ManageOrders = () => {
           <Button onClick={handleCloseStatusDialog} color="primary">
             Close
           </Button>
+          <Button onClick={handleUpdateOrderStatus} color="primary">
+            Update
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -236,18 +256,26 @@ const ManageOrders = () => {
             Select a driver to assign this order to.
           </DialogContentText>
           <FormControl fullWidth margin="normal">
-            <InputLabel>Driver</InputLabel>
-            <Select
-              value={selectedDriverId}
-              onChange={(e) => setSelectedDriverId(e.target.value)}
-            >
-              {drivers.map(driver => (
-                <MenuItem key={driver.id} value={driver.id}>
-                  {driver.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+  <InputLabel>Driver</InputLabel>
+  <Select
+    value={selectedDriverId}
+    onChange={(e) => setSelectedDriverId(e.target.value)}
+  >
+    {drivers.length > 0 ? (
+      drivers.map((driver) => (
+        <MenuItem key={driver.id} value={driver.id}>
+          {driver.name}
+        </MenuItem>
+      ))
+    ) : (
+      <MenuItem value="" disabled>No drivers available</MenuItem>
+    )}
+  </Select>
+</FormControl>
+
+
+
+
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseAssignDialog} color="primary">

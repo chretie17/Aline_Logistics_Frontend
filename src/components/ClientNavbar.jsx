@@ -57,7 +57,7 @@ const ClientNavbar = ({ cart = [], handleRemoveFromCart, handleCheckout }) => {
     { title: 'Home', link: '/' },
     { title: 'Products', link: '/browse-products' },
     { title: 'My Orders', link: '/my-orders' },
-    { title: 'Feedback', link: '/client-feedback' },
+    { title: 'Feedback', link: '/feedback' },
   ];
 
   if (user && user.role !== 'client') {
@@ -70,7 +70,7 @@ const ClientNavbar = ({ cart = [], handleRemoveFromCart, handleCheckout }) => {
         <Brand>
           <BrandImage src={logo} alt="logo" />
           <Typography variant="h6" style={{ color: '#fff' }}>
-            {user ? 'Client' : 'LOGISTICS '}
+            {user ? 'Client' : 'LDMS '}
           </Typography>
         </Brand>
         <MobileMenuContainer
@@ -100,9 +100,6 @@ const ClientNavbar = ({ cart = [], handleRemoveFromCart, handleCheckout }) => {
               </MenuItems>
               <MenuItems toggleMenu={toggleMenu} ss={screenSize}>
                 <NavLink to="/login">Login</NavLink>
-              </MenuItems>
-              <MenuItems toggleMenu={toggleMenu} ss={screenSize}>
-                <NavLink to="/register">Register</NavLink>
               </MenuItems>
             </>
           )}

@@ -41,11 +41,7 @@ export const assignOrderToDriver = (token, orderId, driverId) => {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
-export const getOrdersByDriver = (token, driverId) => {
-  return api.get(`/orders/driver/${driverId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-};
+
 
 export const getOrderDetails = (token, orderId) => {
   return api.get(`/orders/${orderId}`, {
@@ -57,6 +53,17 @@ export const getOrderDetails = (token, orderId) => {
 
 export const deleteOrder = (token, orderId) => {
   return api.delete(`/orders/${orderId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+export const getOrdersByDriver = (token, driverId) => {
+  return api.get(`/orders/driver/${driverId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+export const markOrderAsDelivered = (token, orderId) => {
+  return api.put(`/orders/mark-delivered/${orderId}`, {}, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
